@@ -1,0 +1,61 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           my-xmonad
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/jams2/my-xmonad#readme>
+homepage:       https://github.com/jams2/my-xmonad#readme
+bug-reports:    https://github.com/jams2/my-xmonad/issues
+author:         Joshua Munn
+maintainer:     public@elysee-munn.family
+copyright:      Joshua Munn
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/jams2/my-xmonad
+
+library
+  exposed-modules:
+      Elisp
+      Lib
+  other-modules:
+      Paths_my_xmonad
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-missing-signatures
+  build-depends:
+      X11
+    , base >=4.7 && <5
+    , containers
+    , megaparsec
+    , template-haskell
+    , xmonad
+    , xmonad-contrib
+  default-language: Haskell2010
+
+executable my-xmonad-exe
+  main-is: xmonad.hs
+  other-modules:
+      Paths_my_xmonad
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-missing-signatures -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      X11
+    , base >=4.7 && <5
+    , containers
+    , megaparsec
+    , my-xmonad
+    , template-haskell
+    , xmonad
+    , xmonad-contrib
+  default-language: Haskell2010
