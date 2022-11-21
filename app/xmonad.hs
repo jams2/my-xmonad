@@ -1,8 +1,8 @@
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE QuasiQuotes #-}
 
-import Elisp
 import Data.Map qualified as Map
+import Elisp
 import Graphics.X11.ExtraTypes.XF86
 import XMonad
 import XMonad.Actions.Submap (submap)
@@ -13,10 +13,8 @@ import XMonad.Hooks.ManageHelpers (doCenterFloat)
 import XMonad.Layout.Spacing (Border (..), spacingRaw)
 import XMonad.Util.EZConfig (additionalKeys)
 
-myTerminal :: String
 myTerminal = "wezterm"
 
-winKey :: KeyMask
 winKey = mod4Mask
 
 class ToArgString a where
@@ -38,58 +36,90 @@ emacsClientDefaults =
 
 instance ToArgString EmacsClientArgs where
   toArgString args =
-    let eval = show $ prettyPrint (emacsClientEval args)
-        frameParams = show $ prettyPrint (emacsClientFrameParams args)
+    let eval = case emacsClientEval args of
+          EList [] -> ""
+          expr -> "--eval " ++ show (prettyPrint expr)
+        frameParams = case emacsClientFrameParams args of
+          EList [] -> ""
+          expr -> "--frame-parameters " ++ show (prettyPrint expr)
         file = emacsClientFile args
-     in unwords ["--eval", eval, "--frame-parameters", frameParams, file]
+     in unwords [eval, frameParams, file]
 
 getEmacsClientCommand :: EmacsClientArgs -> String
 getEmacsClientCommand args = unwords ["emacsclient", "--create-frame", toArgString args]
 
+orgAgendaEval =
+  [elisp|
+(let ((org-agenda-window-setup 'only-window))
+  (org-agenda-list))
+|]
+
 orgAgendaArgs :: EmacsClientArgs
 orgAgendaArgs =
   emacsClientDefaults
-    { emacsClientEval = [elisp|(let ((org-agenda-window-setup 'only-window)) (org-agenda-list))|],
+    { emacsClientEval = orgAgendaEval,
       emacsClientFrameParams = [elisp|((name . "*Org Agenda*"))|]
     }
 
-orgCaptureTodoArgs :: EmacsClientArgs
-orgCaptureTodoArgs =
+orgCaptureEval = [elisp|(org-capture nil "g")|]
+
+orgCaptureActionArgs :: EmacsClientArgs
+orgCaptureActionArgs =
   emacsClientDefaults
-    { emacsClientEval = [elisp|(let ((org-capture-mode-hook '(delete-other-windows))) (org-capture nil "g"))|],
-      emacsClientFrameParams = [elisp|((name . "*Org Capture*"))|]
+    { emacsClientEval = orgCaptureEval,
+      emacsClientFrameParams = [elisp|((name . "*My Org Capture*"))|]
     }
+
+orgNextActionsCommand =
+  [elisp|
+(let ((org-agenda-window-setup 'only-window))
+  (org-tags-view nil "TODO=\"NEXT\""))
+|]
 
 orgNextActionsArgs :: EmacsClientArgs
 orgNextActionsArgs =
   emacsClientDefaults
-    { emacsClientEval = [elisp|(let ((org-agenda-window-setup 'only-window)) (org-tags-view nil "TODO=\"NEXT\""))|],
-      emacsClientFrameParams = [elisp|((name . "*Org Capture*"))|]
+    { emacsClientEval = orgNextActionsCommand,
+      emacsClientFrameParams = [elisp|((name . "*My Org Capture*"))|]
     }
+
+orgViewGtdFileArgs :: EmacsClientArgs
+orgViewGtdFileArgs = emacsClientDefaults {emacsClientFile = "/home/joshua/org/gtd.org"}
+
+emacsCalcArgs :: EmacsClientArgs
+emacsCalcArgs =
+  emacsClientDefaults
+    { emacsClientEval = [elisp|(full-calc)|],
+      emacsClientFrameParams = [elisp|((name . "*Calc*"))|]
+    }
+
+emacsViewXmonadConfArgs :: EmacsClientArgs
+emacsViewXmonadConfArgs =
+  emacsClientDefaults {emacsClientFile = "/home/joshua/projects/my-xmonad/app/xmonad.hs"}
 
 myKeys =
   [ ( (winKey, xK_e),
       submap . Map.fromList $
         [ ( (0, xK_c),
-            spawn "emacsclient --create-frame"
+            spawn $ getEmacsClientCommand emacsClientDefaults
           ),
           ( (0, xK_x),
-            spawn "emacsclient --create-frame /home/joshua/dotfiles/xmonad/.config/xmonad/xmonad.hs"
+            spawn $ getEmacsClientCommand emacsViewXmonadConfArgs
           ),
           ( (0, xK_equal),
-            spawn "emacsclient --create-frame --eval '(full-calc)'"
+            spawn $ getEmacsClientCommand emacsCalcArgs
           ),
           ( (0, xK_a),
             spawn $ getEmacsClientCommand orgAgendaArgs
           ),
           ( (0, xK_g),
-            spawn "emacsclient --create-frame /home/joshua/org/gtd.org"
+            spawn $ getEmacsClientCommand orgViewGtdFileArgs
           ),
           ( (0, xK_n),
             spawn $ getEmacsClientCommand orgNextActionsArgs
           ),
           ( (shiftMask, xK_g),
-            spawn $ getEmacsClientCommand orgCaptureTodoArgs
+            spawn $ getEmacsClientCommand orgCaptureActionArgs
           )
         ]
     ),
@@ -115,7 +145,8 @@ myManageHook =
       className =? "Breach" --> doFloat,
       className =? "Paradox Launcher" --> doFloat,
       title =? "*Org Agenda*" --> doCenterFloat,
-      title =? "*Org Capture*" --> doCenterFloat
+      title =? "*My Org Capture*" --> doCenterFloat,
+      title =? "*Calc*" --> doCenterFloat
     ]
 
 myLayout =
