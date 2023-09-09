@@ -141,11 +141,22 @@ emacsMarkdownScratchBufferArgs =
       emacsClientFrameParams = [elisp|((name . "*MarkDown Scratch*"))|]
     }
 
+newFrameEval :: ElispExpr
+newFrameEval =
+  [elisp|
+(progn
+  (fancy-startup-screen)
+  (help-quick))
+|]
+
+emacsNewFrameArgs :: EmacsClientArgs
+emacsNewFrameArgs = emacsClientDefaults { emacsClientEval = newFrameEval }
+
 myKeys =
   [ ( (winKey, xK_e),
       submap . Map.fromList $
         [ ( (0, xK_c),
-            spawn $ getEmacsClientCommand emacsClientDefaults
+            spawn $ getEmacsClientCommand emacsNewFrameArgs
           ),
           ( (0, xK_r),
             spawn "systemctl restart --user emacs.service"
