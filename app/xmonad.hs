@@ -10,17 +10,22 @@ import XMonad.Actions.CycleWS (toggleWS)
 import XMonad.Actions.Submap (submap)
 import XMonad.Config.Gnome (gnomeConfig)
 import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.ManageDocks (ToggleStruts (..), avoidStruts)
+import XMonad.Hooks.ManageDocks (avoidStruts)
 import XMonad.Hooks.ManageHelpers (Side (CE), doCenterFloat, doSideFloat)
+import XMonad.Layout.NoBorders
 import XMonad.Layout.Spacing
 import XMonad.Layout.Spiral (spiral)
 import XMonad.StackSet qualified as W
 import XMonad.Util.EZConfig (additionalKeys)
 
 home = "/home/jmunn/"
+
 projectDir = home ++ "projects/"
+
 orgDir = home ++ "org/"
+
 myTerminal = "wezterm"
+
 winKey = mod4Mask
 
 class ToArgString a where
@@ -150,7 +155,7 @@ newFrameEval =
 |]
 
 emacsNewFrameArgs :: EmacsClientArgs
-emacsNewFrameArgs = emacsClientDefaults { emacsClientEval = newFrameEval }
+emacsNewFrameArgs = emacsClientDefaults {emacsClientEval = newFrameEval}
 
 myKeys =
   [ ( (winKey, xK_e),
@@ -203,7 +208,6 @@ myKeys =
     ((0, xF86XK_AudioMute), spawn "amixer -D pulse sset Master toggle"),
     ((0, xF86XK_MonBrightnessUp), spawn "xbacklight -inc 10"),
     ((0, xF86XK_MonBrightnessDown), spawn "xbacklight -dec 10"),
-    ((winKey, xK_b), toggleMenuBarAndGaps),
     ((winKey, xK_Tab), toggleWS),
     ((winKey, xK_v), spawn "pavucontrol"),
     ((winKey, xK_Print), spawn "flameshot gui")
@@ -215,12 +219,6 @@ myKeys =
          | (i, k) <- zip myWorkspaces [xK_1 ..],
            (f, m) <- [(W.view, 0), (W.shift, shiftMask), (copy, shiftMask .|. controlMask)]
        ]
-
-toggleMenuBarAndGaps :: X ()
-toggleMenuBarAndGaps = do
-  toggleScreenSpacingEnabled
-  toggleWindowSpacingEnabled
-  sendMessage ToggleStruts
 
 myWorkspaces = map show ([1 .. 9] :: [Int])
 
@@ -244,8 +242,9 @@ myManageHook =
 
 myLayout =
   avoidStruts $
-    spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
-      Tall nmaster delta ratio ||| Full ||| spiral (6 / 7)
+    smartBorders $
+      spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
+        Tall nmaster delta ratio ||| Full ||| spiral (6 / 7)
   where
     nmaster = 1
     ratio = 1 / 2
