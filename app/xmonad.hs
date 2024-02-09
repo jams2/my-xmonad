@@ -4,6 +4,7 @@
 import Data.Map qualified as Map
 import Elisp
 import Graphics.X11.ExtraTypes.XF86
+import SideBorder qualified as SB
 import XMonad
 import XMonad.Actions.CopyWindow (copy)
 import XMonad.Actions.CycleWS (toggleWS)
@@ -32,9 +33,9 @@ class ToArgString a where
   toArgString :: a -> String
 
 data EmacsClientArgs = EmacsClientArgs
-  { emacsClientEval :: ElispExpr,
-    emacsClientFrameParams :: ElispExpr,
-    emacsClientFile :: String
+  { emacsClientEval :: !ElispExpr,
+    emacsClientFrameParams :: !ElispExpr,
+    emacsClientFile :: !String
   }
 
 emacsClientDefaults :: EmacsClientArgs
@@ -148,11 +149,7 @@ emacsMarkdownScratchBufferArgs =
 
 newFrameEval :: ElispExpr
 newFrameEval =
-  [elisp|
-(progn
-  (fancy-startup-screen)
-  (help-quick))
-|]
+  [elisp|(fancy-startup-screen)|]
 
 emacsNewFrameArgs :: EmacsClientArgs
 emacsNewFrameArgs = emacsClientDefaults {emacsClientEval = newFrameEval}
@@ -222,12 +219,6 @@ myKeys =
 
 myWorkspaces = map show ([1 .. 9] :: [Int])
 
-myNormalBorderColor = "#555"
-
-myFocusedBorderColor = "#cb1aaa"
-
-myBorderWidth = 2
-
 myManageHook =
   composeAll
     [ className =? "Pavucontrol" --> doCenterFloat,
@@ -237,31 +228,42 @@ myManageHook =
       className =? "zoom" --> doCenterFloat,
       title =? "*My Org Agenda*" --> doCenterFloat,
       title =? "*My Org Capture*" --> doCenterFloat,
-      title =? "*Calc*" --> doCenterFloat
+      title =? "*Calc*" --> doCenterFloat,
+      className =? "qmmp" --> hasBorder False <+> doFloat,
+      className =? "Qmmp" --> hasBorder False <+> doFloat,
+      appName =? "playlist" <&&> className =? "Qmmp" --> hasBorder False <+> doFloat
     ]
 
 myLayout =
   avoidStruts $
-    smartBorders $
-      spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
-        Tall nmaster delta ratio ||| Full ||| spiral (6 / 7)
+    spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
+      Tall nmaster delta ratio ||| Full ||| spiral (6 / 7)
   where
     nmaster = 1
     ratio = 1 / 2
     delta = 3 / 100
 
+sideBorderConfig :: SB.SideBorderConfig
+sideBorderConfig =
+  def
+    { SB.sbSide = SB.U,
+      SB.sbSize = 12,
+      SB.sbActiveColor = "#583435",
+      SB.sbActiveBorderColor = "#583435",
+      SB.sbInactiveColor = "#372d32",
+      SB.sbInactiveBorderColor = "#372d32"
+    }
+
 main :: IO ()
 main = do
   xmonad $
-    ewmhFullscreen $
-      ewmh
-        gnomeConfig
-          { terminal = myTerminal,
-            modMask = winKey,
-            borderWidth = myBorderWidth,
-            focusedBorderColor = myFocusedBorderColor,
-            normalBorderColor = myNormalBorderColor,
-            manageHook = myManageHook <+> manageHook gnomeConfig,
-            layoutHook = myLayout
-          }
-        `additionalKeys` myKeys
+    SB.sideBorder sideBorderConfig $
+      ewmhFullscreen $
+        ewmh
+          gnomeConfig
+            { terminal = myTerminal,
+              modMask = winKey,
+              manageHook = myManageHook <+> manageHook gnomeConfig,
+              layoutHook = myLayout
+            }
+          `additionalKeys` myKeys

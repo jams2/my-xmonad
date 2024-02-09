@@ -21,8 +21,8 @@ description:         Please see the README on GitHub at <https://github.com/jams
 
 dependencies:
 - base >= 4.7 && < 5
-- xmonad
-- xmonad-contrib
+- xmonad >= 0.18.0 && < 0.19.0
+- xmonad-contrib >= 0.18.0 && < 0.19.0
 - megaparsec
 - X11
 - containers
