@@ -30,6 +30,9 @@ module SideBorder
     SideBorderConfig (..),
     def,
 
+    -- * Utils
+    getTheme,
+
     -- * Re-exports
     Direction2D (..),
 
@@ -146,28 +149,29 @@ sideBorder sbc cfg =
 -- side border in every layout (do not use the two functions together).
 sideBorderLayout :: (Eq a) => SideBorderConfig -> l a -> SideBorder l a
 sideBorderLayout
+  conf@SideBorderConfig {sbSide} =
+    decoration BorderShrinker (getTheme conf) (SideBorderDecoration sbSide)
+
+getTheme :: SideBorderConfig -> Theme
+getTheme
   SideBorderConfig
     { sbSide,
+      sbSize,
       sbActiveColor,
       sbActiveBorderColor,
       sbInactiveColor,
-      sbInactiveBorderColor,
-      sbSize
+      sbInactiveBorderColor
     } =
-    decoration BorderShrinker theme (SideBorderDecoration sbSide)
+    deco
+      { activeColor = sbActiveColor,
+        activeBorderColor = sbActiveBorderColor,
+        inactiveColor = sbInactiveColor,
+        inactiveBorderColor = sbInactiveBorderColor
+      }
     where
-      theme :: Theme
-      theme =
-        deco
-          { activeColor = sbActiveColor,
-            inactiveColor = sbInactiveColor,
-            activeBorderColor = sbActiveBorderColor,
-            inactiveBorderColor = sbInactiveBorderColor
-          }
-        where
-          deco
-            | sbSide `elem` [U, D] = def {decoHeight = sbSize}
-            | otherwise = def {decoWidth = sbSize}
+      deco
+        | sbSide `elem` [U, D] = def {decoHeight = sbSize}
+        | otherwise = def {decoWidth = sbSize}
 
 -----------------------------------------------------------------------
 -- Decoration

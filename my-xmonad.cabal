@@ -59,3 +59,21 @@ executable my-xmonad-exe
     , xmonad >=0.18.0 && <0.19.0
     , xmonad-contrib >=0.18.0 && <0.19.0
   default-language: Haskell2010
+
+executable xmonadctl-exe
+  main-is: xmonadctl.hs
+  other-modules:
+      Paths_my_xmonad
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-missing-signatures -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      X11
+    , base >=4.7 && <5
+    , containers
+    , megaparsec
+    , my-xmonad
+    , template-haskell
+    , xmonad >=0.18.0 && <0.19.0
+    , xmonad-contrib >=0.18.0 && <0.19.0
+  default-language: Haskell2010

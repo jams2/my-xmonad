@@ -53,3 +53,13 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - my-xmonad
+
+  xmonadctl-exe:
+    main: xmonadctl.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - my-xmonad

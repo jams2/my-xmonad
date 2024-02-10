@@ -1,10 +1,11 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 import Data.Map qualified as Map
 import Elisp
 import Graphics.X11.ExtraTypes.XF86
-import SideBorder qualified as SB
+import SideBorder
 import XMonad
 import XMonad.Actions.CopyWindow (copy)
 import XMonad.Actions.CycleWS (toggleWS)
@@ -13,11 +14,13 @@ import XMonad.Config.Gnome (gnomeConfig)
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (avoidStruts)
 import XMonad.Hooks.ManageHelpers (Side (CE), doCenterFloat, doSideFloat)
+import XMonad.Hooks.ServerMode
+import XMonad.Layout.Decoration (DecorationMsg (..))
 import XMonad.Layout.NoBorders
 import XMonad.Layout.Spacing
-import XMonad.Layout.Spiral (spiral)
 import XMonad.StackSet qualified as W
 import XMonad.Util.EZConfig (additionalKeys)
+import XMonad.Util.ExtensibleState qualified as XS
 
 home = "/home/jmunn/"
 
@@ -235,35 +238,65 @@ myManageHook =
     ]
 
 myLayout =
-  avoidStruts $
-    spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
-      Tall nmaster delta ratio ||| Full ||| spiral (6 / 7)
+  smartBorders $
+    avoidStruts $
+      spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
+        Tall nmaster delta ratio ||| Full
   where
     nmaster = 1
     ratio = 1 / 2
     delta = 3 / 100
 
-sideBorderConfig :: SB.SideBorderConfig
+borderSide = U
+
+borderSize = 12
+
+sideBorderConfig :: SideBorderConfig
 sideBorderConfig =
   def
-    { SB.sbSide = SB.U,
-      SB.sbSize = 12,
-      SB.sbActiveColor = "#583435",
-      SB.sbActiveBorderColor = "#583435",
-      SB.sbInactiveColor = "#372d32",
-      SB.sbInactiveBorderColor = "#372d32"
+    { sbSide = borderSide,
+      sbSize = borderSize,
+      sbActiveColor = "#583435",
+      sbActiveBorderColor = "#583435",
+      sbInactiveColor = "#372d32",
+      sbInactiveBorderColor = "#372d32"
     }
+
+instance ExtensionClass SideBorderConfig where
+  initialValue = sideBorderConfig
+
+updateBorderColors :: String -> X ()
+updateBorderColors newColors = do
+  conf <- XS.gets updateConf :: X SideBorderConfig
+  broadcastMessage (SetTheme $ getTheme conf) >> refresh
+  XS.put conf
+  where
+    updateConf c =
+      c
+        { sbActiveColor = ac,
+          sbActiveBorderColor = ac,
+          sbInactiveColor = ic,
+          sbInactiveBorderColor = ic
+        }
+    -- TODO: parse the input properly - "#colour,#colour"
+    ac = takeWhile (/= ',') newColors
+    ic = tail $ dropWhile (/= ',') newColors
+
+updateBorderColorsAtom = "XMONAD_UPDATE_BORDER_COLORS"
+
+myHandleEventHook = serverModeEventHookF updateBorderColorsAtom updateBorderColors
 
 main :: IO ()
 main = do
   xmonad $
-    SB.sideBorder sideBorderConfig $
-      ewmhFullscreen $
+    ewmhFullscreen $
+      sideBorder sideBorderConfig $
         ewmh
           gnomeConfig
             { terminal = myTerminal,
               modMask = winKey,
               manageHook = myManageHook <+> manageHook gnomeConfig,
-              layoutHook = myLayout
+              layoutHook = myLayout,
+              handleEventHook = myHandleEventHook
             }
           `additionalKeys` myKeys
