@@ -10,9 +10,9 @@ import XMonad
 import XMonad.Actions.CopyWindow (copy)
 import XMonad.Actions.CycleWS (toggleWS)
 import XMonad.Actions.Submap (submap)
+import XMonad.Config.Desktop (desktopConfig, desktopLayoutModifiers)
 import XMonad.Config.Gnome (gnomeConfig)
 import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.ManageDocks (avoidStruts)
 import XMonad.Hooks.ManageHelpers (Side (CE), doCenterFloat, doSideFloat)
 import XMonad.Hooks.ServerMode
 import XMonad.Layout.Decoration (DecorationMsg (..))
@@ -238,8 +238,8 @@ myManageHook =
     ]
 
 myLayout =
-  smartBorders $
-    avoidStruts $
+  desktopLayoutModifiers $
+    smartBorders $
       spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
         Tall nmaster delta ratio ||| Full
   where
@@ -295,8 +295,8 @@ main = do
           gnomeConfig
             { terminal = myTerminal,
               modMask = winKey,
-              manageHook = myManageHook <+> manageHook gnomeConfig,
+              manageHook = myManageHook <> manageHook gnomeConfig,
               layoutHook = myLayout,
-              handleEventHook = myHandleEventHook
+              handleEventHook = myHandleEventHook <> handleEventHook desktopConfig
             }
           `additionalKeys` myKeys
