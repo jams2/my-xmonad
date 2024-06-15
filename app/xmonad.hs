@@ -15,7 +15,9 @@ import XMonad.Config.Gnome (gnomeConfig)
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageHelpers (Side (CE), doCenterFloat, doSideFloat)
 import XMonad.Hooks.ServerMode
+import XMonad.Layout.CenteredIfSingle
 import XMonad.Layout.Decoration (DecorationMsg (..))
+import XMonad.Layout.DraggingVisualizer
 import XMonad.Layout.NoBorders
 import XMonad.Layout.Spacing
 import XMonad.StackSet qualified as W
@@ -92,6 +94,13 @@ orgCaptureNoteArgs =
       emacsClientFrameParams = [elisp|((name . "*My Org Capture*") (width . 120))|]
     }
 
+orgCaptureArgs :: EmacsClientArgs
+orgCaptureArgs =
+  emacsClientDefaults
+    { emacsClientEval = [elisp|(josh/org-capture-focused)|],
+      emacsClientFrameParams = [elisp|((name . "*My Org Capture*") (width . 120))|]
+    }
+
 orgNextActionsCommand =
   [elisp|
 (let ((org-agenda-window-setup 'only-window))
@@ -162,6 +171,9 @@ myKeys =
       submap . Map.fromList $
         [ ( (0, xK_c),
             spawn $ getEmacsClientCommand emacsNewFrameArgs
+          ),
+          ( (shiftMask, xK_c),
+            spawn $ getEmacsClientCommand orgCaptureArgs
           ),
           ( (0, xK_r),
             spawn "systemctl restart --user emacs.service"
@@ -238,14 +250,18 @@ myManageHook =
     ]
 
 myLayout =
-  desktopLayoutModifiers $
-    smartBorders $
-      spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
-        Tall nmaster delta ratio ||| Full
+    draggingVisualizer $
+      desktopLayoutModifiers $
+        smartBorders $
+          spacingRaw False (Border 10 0 10 0) True (Border 0 10 0 10) True $
+            myTall
+              ||| centeredIfSingle 0.7 0.98 myTall
+              ||| Full
   where
     nmaster = 1
     ratio = 1 / 2
     delta = 3 / 100
+    myTall = Tall nmaster delta ratio
 
 borderSide = U
 
@@ -286,17 +302,25 @@ updateBorderColorsAtom = "XMONAD_UPDATE_BORDER_COLORS"
 
 myHandleEventHook = serverModeEventHookF updateBorderColorsAtom updateBorderColors
 
+myNormalBorderColor = "#555"
+
+myFocusedBorderColor = "#cb1aaa"
+
+myBorderWidth = 3
+
 main :: IO ()
 main = do
   xmonad $
     ewmhFullscreen $
-      sideBorder sideBorderConfig $
-        ewmh
-          gnomeConfig
-            { terminal = myTerminal,
-              modMask = winKey,
-              manageHook = myManageHook <> manageHook gnomeConfig,
-              layoutHook = myLayout,
-              handleEventHook = myHandleEventHook <> handleEventHook desktopConfig
-            }
-          `additionalKeys` myKeys
+      ewmh
+        gnomeConfig
+          { terminal = myTerminal,
+            modMask = winKey,
+            manageHook = myManageHook <> manageHook gnomeConfig,
+            layoutHook = myLayout,
+            handleEventHook = myHandleEventHook <> handleEventHook desktopConfig,
+            normalBorderColor = myNormalBorderColor,
+            focusedBorderColor = myFocusedBorderColor,
+            borderWidth = myBorderWidth
+          }
+        `additionalKeys` myKeys

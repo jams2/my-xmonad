@@ -5,7 +5,6 @@
 -- For usage help, do @xmonadctl -h@
 
 import Control.Monad
-import Data.Char
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 import System.Environment
