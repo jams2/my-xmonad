@@ -14,12 +14,9 @@ import XMonad.Layout.NoBorders
 import XMonad.Layout.Spacing (Border (..), spacingRaw)
 import XMonad.Util.EZConfig (additionalKeys)
 
-myTerminal = "wezterm"
+myTerminal = "xterm"
 
 winKey = mod4Mask
-
-class ToArgString a where
-  toArgString :: a -> String
 
 myKeys =
   [ 
